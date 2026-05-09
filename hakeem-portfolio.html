@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hakeem P R — Software Developer</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff41;
+    --green-dim: #00cc33;
+    --green-glow: rgba(0,255,65,0.15);
+    --green-mid: rgba(0,255,65,0.5);
+    --dark: #020a04;
+    --darker: #010601;
+    --text: #c8ffd4;
+    --muted: #4a8a55;
+    --accent: #00ff41;
+    --card-bg: rgba(0,20,8,0.85);
+    --border: rgba(0,255,65,0.2);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Rajdhani', sans-serif; background: var(--darker); color: var(--text); overflow-x: hidden; cursor: crosshair; }
+  #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.18; pointer-events: none; }
+  .page { display: none; position: relative; z-index: 1; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 18px 48px; background: rgba(1,6,1,0.92); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+  .nav-logo { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900; color: var(--green); text-shadow: 0 0 20px var(--green); cursor: pointer; letter-spacing: 2px; }
+  .nav-logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 36px; align-items: center; }
+  .nav-links a { font-family: 'Share Tech Mono', monospace; color: var(--muted); text-decoration: none; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: color 0.2s, text-shadow 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--green); text-shadow: 0 0 12px var(--green); }
+
+  /* HOME */
+  #home { padding-top: 80px; }
+  .hero { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: calc(100vh - 80px); padding: 60px 80px; position: relative; gap: 40px; }
+  .hero-left { text-align: right; }
+  .hero-title-main { font-family: 'Orbitron', monospace; font-size: clamp(42px, 6vw, 80px); font-weight: 900; color: var(--green); text-shadow: 0 0 40px var(--green), 0 0 80px rgba(0,255,65,0.3); line-height: 1; animation: flicker 4s infinite; }
+  @keyframes flicker { 0%,96%,100%{opacity:1} 97%{opacity:0.85} 98%{opacity:1} 99%{opacity:0.9} }
+  .hero-subtitle { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--muted); margin-top: 12px; letter-spacing: 1px; line-height: 1.8; }
+  .hero-center { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .photo-wrap { width: 280px; height: 340px; position: relative; overflow: hidden; }
+  .photo-wrap::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(0,255,65,0.08) 30%, transparent 60%, rgba(0,255,65,0.05) 100%); z-index: 2; }
+  .photo-border { position: absolute; inset: -2px; background: linear-gradient(135deg, var(--green), transparent, var(--green-dim)); border-radius: 2px; z-index: -1; animation: border-rotate 3s linear infinite; }
+  @keyframes border-rotate { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(30deg)} }
+  .photo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; filter: contrast(1.1) brightness(0.95); }
+  .photo-split-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; background: linear-gradient(135deg, rgba(0,40,15,0.5), rgba(0,255,65,0.08)); z-index: 1; mix-blend-mode: color; }
+  .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--green), transparent); animation: scan 3s linear infinite; z-index: 3; opacity: 0.6; }
+  @keyframes scan { 0%{top:0} 100%{top:100%} }
+  .corner { position: absolute; width: 20px; height: 20px; z-index: 4; }
+  .corner-tl { top: 0; left: 0; border-top: 2px solid var(--green); border-left: 2px solid var(--green); }
+  .corner-tr { top: 0; right: 0; border-top: 2px solid var(--green); border-right: 2px solid var(--green); }
+  .corner-bl { bottom: 0; left: 0; border-bottom: 2px solid var(--green); border-left: 2px solid var(--green); }
+  .corner-br { bottom: 0; right: 0; border-bottom: 2px solid var(--green); border-right: 2px solid var(--green); }
+  .hero-name-tag { margin-top: 20px; text-align: center; }
+  .hero-name-tag h1 { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 700; color: var(--green); letter-spacing: 4px; text-shadow: 0 0 15px var(--green); }
+  .hero-name-tag p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 3px; margin-top: 4px; }
+  .hero-right { text-align: left; }
+  .code-block { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--muted); line-height: 2; }
+  .code-block .kw { color: var(--green); }
+  .code-block .str { color: #88ffaa; }
+  .code-block .cm { color: #2a5c35; }
+  .typewriter { font-family: 'Orbitron', monospace; font-size: clamp(38px, 5vw, 68px); font-weight: 900; color: var(--text); text-shadow: 0 0 20px rgba(200,255,212,0.3); line-height: 1; display: inline-block; }
+  .cursor { display: inline-block; width: 3px; height: 1em; background: var(--green); margin-left: 4px; vertical-align: text-bottom; animation: blink 0.7s step-end infinite; box-shadow: 0 0 8px var(--green); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* SOCIAL */
+  .social-strip { display: flex; justify-content: center; gap: 24px; padding: 20px 0 40px; flex-wrap: wrap; }
+  .social-btn { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); padding: 8px 18px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; background: transparent; }
+  .social-btn::before { content: ''; position: absolute; inset: 0; background: var(--green); transform: translateX(-100%); transition: transform 0.2s; z-index: -1; }
+  .social-btn:hover::before { transform: translateX(0); }
+  .social-btn:hover { color: var(--darker); border-color: var(--green); }
+
+  /* SECTION HEADER */
+  .section-header { text-align: center; padding: 60px 0 40px; position: relative; }
+  .section-header h2 { font-family: 'Orbitron', monospace; font-size: clamp(18px, 3vw, 28px); font-weight: 700; letter-spacing: 8px; color: var(--text); }
+  .section-header h2 span { color: var(--green); }
+  .section-line { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
+  .section-line::before, .section-line::after { content: ''; height: 1px; width: 80px; background: linear-gradient(90deg, transparent, var(--green)); }
+  .section-line::after { transform: scaleX(-1); }
+  .section-line span { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 3px; }
+
+  /* PROJECTS */
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 0 60px 80px; max-width: 1400px; margin: 0 auto; }
+  .project-card { background: var(--card-bg); border: 1px solid var(--border); padding: 28px; cursor: pointer; position: relative; overflow: hidden; transition: transform 0.3s, border-color 0.3s; }
+  .project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--green), transparent); transform: scaleX(0); transition: transform 0.3s; }
+  .project-card:hover::before { transform: scaleX(1); }
+  .project-card:hover { transform: translateY(-4px); border-color: var(--green-mid); }
+  .project-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--green); text-transform: uppercase; margin-bottom: 12px; }
+  .project-card h3 { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; letter-spacing: 1px; }
+  .project-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+  .project-techs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .tech-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 4px 10px; border: 1px solid var(--border); color: var(--green); letter-spacing: 1px; }
+  .project-link { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--green); letter-spacing: 2px; display: flex; align-items: center; gap: 6px; }
+  .project-link::after { content: '→'; transition: transform 0.2s; }
+  .project-card:hover .project-link::after { transform: translateX(4px); }
+
+  /* INNER PAGES */
+  .inner-page { padding: 120px 80px 80px; max-width: 1100px; margin: 0 auto; }
+
+  /* ABOUT */
+  .about-grid { display: grid; grid-template-columns: 260px 1fr; gap: 60px; align-items: start; margin-top: 40px; }
+  .about-photo { position: relative; }
+  .about-photo img { width: 100%; display: block; filter: contrast(1.1) brightness(0.95); }
+  .about-info h3 { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: 4px; margin-bottom: 16px; margin-top: 32px; }
+  .about-info h3:first-child { margin-top: 0; }
+  .about-info p { font-size: 15px; line-height: 1.9; color: var(--muted); }
+  .info-row { display: flex; gap: 12px; margin-bottom: 8px; font-size: 14px; align-items: center; }
+  .info-label { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--green); letter-spacing: 2px; min-width: 100px; }
+  .info-val { color: var(--text); }
+  .lang-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .lang-badge { font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px 14px; border: 1px solid var(--border); color: var(--green); letter-spacing: 1px; background: rgba(0,255,65,0.04); }
+
+  /* SKILLS */
+  .skills-section { margin-top: 40px; }
+  .skills-category { margin-bottom: 40px; }
+  .skills-category h3 { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; letter-spacing: 4px; color: var(--green); margin-bottom: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .skill-item { background: var(--card-bg); border: 1px solid var(--border); padding: 14px 18px; position: relative; overflow: hidden; }
+  .skill-name { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--text); letter-spacing: 1px; margin-bottom: 8px; }
+  .skill-bar { height: 2px; background: rgba(0,255,65,0.15); position: relative; overflow: hidden; }
+  .skill-fill { height: 100%; background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: 0 0 6px var(--green); transition: width 1.5s ease; width: 0; }
+
+  /* CONTACT */
+  .contact-info h3 { font-family: 'Orbitron', monospace; font-size: 12px; letter-spacing: 4px; color: var(--green); margin-bottom: 24px; }
+  .contact-item { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .contact-icon { width: 40px; height: 40px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--green); font-size: 16px; flex-shrink: 0; }
+  .contact-detail { flex: 1; }
+  .contact-detail span { display: block; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 4px; }
+  .contact-detail a, .contact-detail p { font-size: 14px; color: var(--text); text-decoration: none; transition: color 0.2s; }
+  .contact-detail a:hover { color: var(--green); }
+
+  /* PROJECT DETAIL */
+  #project-detail { padding-top: 80px; }
+  .detail-inner { max-width: 900px; margin: 0 auto; padding: 60px 60px 100px; }
+  .back-btn { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 2px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 40px; background: none; border: none; transition: color 0.2s; }
+  .back-btn:hover { color: var(--green); }
+  .back-btn::before { content: '←'; }
+  .detail-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--green); margin-bottom: 12px; }
+  .detail-title { font-family: 'Orbitron', monospace; font-size: clamp(26px, 4vw, 48px); font-weight: 900; color: var(--text); text-shadow: 0 0 30px rgba(200,255,212,0.2); margin-bottom: 20px; line-height: 1.1; }
+  .detail-meta { display: flex; gap: 24px; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .detail-meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .detail-meta-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+  .detail-meta-value { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--green); }
+  .detail-section-title { font-family: 'Orbitron', monospace; font-size: 12px; letter-spacing: 4px; color: var(--green); margin-bottom: 16px; margin-top: 36px; }
+  .detail-body p { font-size: 15px; line-height: 1.9; color: var(--muted); margin-bottom: 16px; }
+  .detail-features { list-style: none; margin-bottom: 24px; }
+  .detail-features li { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--text); padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
+  .detail-features li::before { content: '▸'; color: var(--green); flex-shrink: 0; }
+  .detail-tech-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .detail-tech { font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 8px 16px; border: 1px solid var(--border); color: var(--green); letter-spacing: 1px; }
+
+  /* GLITCH */
+  .glitch { position: relative; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .glitch::before { color: #ff0055; animation: glitch1 3s infinite; clip-path: polygon(0 10%, 100% 10%, 100% 40%, 0 40%); }
+  .glitch::after { color: #00ffff; animation: glitch2 3s infinite; clip-path: polygon(0 55%, 100% 55%, 100% 80%, 0 80%); }
+  @keyframes glitch1 { 0%,94%,100%{transform:none;opacity:0} 95%{transform:translateX(-4px);opacity:0.8} 97%{transform:translateX(4px);opacity:0.8} 99%{transform:translateX(0);opacity:0} }
+  @keyframes glitch2 { 0%,94%,100%{transform:none;opacity:0} 95%{transform:translateX(4px);opacity:0.7} 97%{transform:translateX(-4px);opacity:0.7} 99%{transform:none;opacity:0} }
+
+  /* FOOTER — single per page */
+  footer { border-top: 1px solid var(--border); padding: 24px 80px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+  footer p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  footer span { color: var(--green); }
+
+  /* EXPERIENCE */
+  .exp-timeline { position: relative; padding-left: 40px; margin-top: 40px; }
+  .exp-timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, var(--green), transparent); }
+  .exp-item { position: relative; margin-bottom: 48px; }
+  .exp-item::before { content: ''; position: absolute; left: -36px; top: 4px; width: 10px; height: 10px; border: 2px solid var(--green); background: var(--darker); transform: rotate(45deg); box-shadow: 0 0 10px var(--green); }
+  .exp-period { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--green); margin-bottom: 6px; }
+  .exp-title { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .exp-company { font-size: 13px; color: var(--muted); margin-bottom: 12px; font-family: 'Share Tech Mono', monospace; }
+  .exp-desc { font-size: 14px; line-height: 1.9; color: var(--muted); }
+  .fresher-badge { display: inline-block; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--green); border: 1px solid var(--green); padding: 6px 14px; margin-top: 8px; animation: pulse-border 2s ease infinite; }
+  @keyframes pulse-border { 0%,100%{box-shadow:0 0 4px var(--green)} 50%{box-shadow:0 0 16px var(--green)} }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 14px 24px; }
+    .nav-links { gap: 20px; }
+    .hero { grid-template-columns: 1fr; text-align: center; padding: 40px 24px; }
+    .hero-left, .hero-right { text-align: center; }
+    .hero-center { order: -1; }
+    .photo-wrap { width: 200px; height: 250px; }
+    .projects-grid { padding: 0 24px 60px; }
+    .inner-page { padding: 100px 24px 60px; }
+    .about-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 8px; text-align: center; padding: 16px 24px; }
+  }
+
+  /* REVEAL */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">H<span>PR</span></div>
+  <div class="nav-links">
+    <a onclick="showPage('home')" id="nav-home" class="active">HOME</a>
+    <a onclick="showPage('about')" id="nav-about">ABOUT</a>
+    <a onclick="showPage('skills')" id="nav-skills">SKILLS</a>
+    <a onclick="showPage('experience')" id="nav-experience">EXPERIENCE</a>
+    <a onclick="showPage('contact')" id="nav-contact">CONTACT</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="home">
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-title-main glitch" data-text="developer">developer</div>
+      <div class="hero-subtitle">MCA Graduate crafting<br>clean, scalable software<br>systems & experiences.</div>
+    </div>
+    <div class="hero-center">
+      <div class="photo-wrap">
+        <div class="photo-border"></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+        <div class="photo-split-left"></div>
+        <div class="scan-line"></div>
+        <img src="home.png" alt="Hakeem P R">
+      </div>
+      <div class="hero-name-tag">
+        <h1>HAKEEM P R</h1>
+        <p>SOFTWARE DEVELOPER</p>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="typewriter" id="typewriter"></div><span class="cursor"></span>
+      <div class="code-block" style="margin-top:20px">
+        <span class="cm">// current status</span><br>
+        <span class="kw">const</span> dev = {<br>
+        &nbsp;&nbsp;role: <span class="str">"fresher"</span>,<br>
+        &nbsp;&nbsp;ready: <span class="kw">true</span>,<br>
+        &nbsp;&nbsp;learning: <span class="kw">always</span><br>
+        };
+      </div>
+    </div>
+  </section>
+
+  <div class="social-strip">
+    <a class="social-btn" href="mailto:iamhakeempr@gmail.com">EMAIL</a>
+    <a class="social-btn" href="https://github.com/hakeempr" target="_blank">GITHUB</a>
+    <a class="social-btn" href="https://www.linkedin.com/in/hakeem-p-r-518103259" target="_blank">LINKEDIN</a>
+    <a class="social-btn" href="https://x.com/Hakeem_pr" target="_blank">TWITTER</a>
+    <a class="social-btn" href="https://instagram.com/hakeem.pr" target="_blank">INSTAGRAM</a>
+    <a class="social-btn" href="tel:+917736858916">CALL</a>
+  </div>
+
+  <div class="section-header">
+    <h2>MY LATEST <span>PROJECTS</span></h2>
+    <div class="section-line"><span>PORTFOLIO</span></div>
+  </div>
+
+  <div class="projects-grid" id="projects-grid"></div>
+
+  <footer>
+    <p>© 2026 <span>HAKEEM P R</span> — All rights reserved</p>
+    <p>Built with <span>{ code }</span> & creativity</p>
+  </footer>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="about">
+  <div class="inner-page">
+    <div class="section-header" style="text-align:left;padding-top:0">
+      <h2>ABOUT <span>ME</span></h2>
+      <div class="section-line" style="justify-content:flex-start"><span>PROFILE</span></div>
+    </div>
+    <div class="about-grid">
+      <div class="about-photo">
+        <img src="about.png" alt="Hakeem P R">
+      </div>
+      <div class="about-info">
+        <h3>WHO I AM</h3>
+        <p>I'm Hakeem P R, a passionate software developer and MCA graduate eager to enter the tech industry. I thrive on building robust applications, solving complex algorithmic challenges, and continuously expanding my technical skillset. My academic journey has equipped me with a strong foundation across the full software development lifecycle — from concept and design through to deployment and maintenance.</p>
+        <h3>PERSONAL DETAILS</h3>
+        <div class="info-row"><span class="info-label">NAME</span><span class="info-val">Hakeem P R</span></div>
+        <div class="info-row"><span class="info-label">EDUCATION</span><span class="info-val">MCA — Masters of Computer Applications</span></div>
+        <div class="info-row"><span class="info-label">STATUS</span><span class="info-val">Fresher · Actively seeking opportunities</span></div>
+        <div class="info-row"><span class="info-label">EMAIL</span><span class="info-val">iamhakeempr@gmail.com</span></div>
+        <div class="info-row"><span class="info-label">PHONE</span><span class="info-val">+91 7736858916</span></div>
+        <div class="info-row"><span class="info-label">LOCATION</span><span class="info-val">Kerala, India</span></div>
+        <h3>LANGUAGES SPOKEN</h3>
+        <div class="lang-badges">
+          <span class="lang-badge">ENGLISH</span>
+          <span class="lang-badge">MALAYALAM</span>
+          <span class="lang-badge">HINDI</span>
+          <span class="lang-badge">ARABIC</span>
+        </div>
+        <h3>CONNECT</h3>
+        <div class="info-row"><span class="info-label">GITHUB</span><a href="https://github.com/hakeempr" target="_blank" style="color:var(--green);font-size:13px">github.com/hakeempr</a></div>
+        <div class="info-row"><span class="info-label">INSTAGRAM</span><a href="https://instagram.com/hakeem.pr" target="_blank" style="color:var(--green);font-size:13px">@hakeem.pr</a></div>
+        <div class="info-row"><span class="info-label">LINKEDIN</span><a href="https://www.linkedin.com/in/hakeem-p-r-518103259" target="_blank" style="color:var(--green);font-size:13px">/hakeem-p-r-518103259</a></div>
+        <div class="info-row"><span class="info-label">TWITTER/X</span><a href="https://x.com/Hakeem_pr" target="_blank" style="color:var(--green);font-size:13px">@Hakeem_pr</a></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>© 2026 <span>HAKEEM P R</span></p>
+    <p>Kerala, India</p>
+  </footer>
+</div>
+
+<!-- SKILLS -->
+<div class="page" id="skills">
+  <div class="inner-page">
+    <div class="section-header" style="text-align:left;padding-top:0">
+      <h2>SKILLS & <span>TECHNOLOGIES</span></h2>
+      <div class="section-line" style="justify-content:flex-start"><span>STACK</span></div>
+    </div>
+    <div class="skills-section" id="skills-container"></div>
+  </div>
+  <footer>
+    <p>© 2026 <span>HAKEEM P R</span></p>
+    <p>Always learning · Always growing</p>
+  </footer>
+</div>
+
+<!-- EXPERIENCE -->
+<div class="page" id="experience">
+  <div class="inner-page">
+    <div class="section-header" style="text-align:left;padding-top:0">
+      <h2>EXPERIENCE & <span>EDUCATION</span></h2>
+      <div class="section-line" style="justify-content:flex-start"><span>TIMELINE</span></div>
+    </div>
+    <div class="exp-timeline">
+      <div class="exp-item">
+        <div class="exp-period">CURRENT STATUS</div>
+        <div class="exp-title">Looking for Opportunities</div>
+        <div class="exp-company">Ready to contribute · Day One</div>
+        <p class="exp-desc">Actively seeking a software development role where I can apply my academic expertise, collaborate with experienced engineers, and grow into a well-rounded developer. I bring enthusiasm, adaptability, and a strong work ethic.</p>
+        <span class="fresher-badge">FRESHER · READY TO HIRE</span>
+      </div>
+      <div class="exp-item">
+        <div class="exp-period">2024 – 2026</div>
+        <div class="exp-title">MCA — Masters of Computer Applications</div>
+        <div class="exp-company">APJ Abdul Kalam Technological University (KTU) · Kerala, India</div>
+        <p class="exp-desc">Advanced postgraduate program covering software engineering, database management, algorithms & data structures, cloud computing, full-stack development, machine learning fundamentals, and software project management. Graduated with strong theoretical and practical foundations.</p>
+      </div>
+      <div class="exp-item">
+        <div class="exp-period">2020 – 2023</div>
+        <div class="exp-title">Bachelor of Commerce</div>
+        <div class="exp-company">Mahatma Gandhi University (MGU) · Kerala, India</div>
+        <p class="exp-desc">Undergraduate program focused on the principles of business, finance, and trade. Core curriculum includes accounting practices, corporate law, taxation, and economic theory. Developed foundational skills in financial reporting, auditing, and business management.</p>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>© 2026 <span>HAKEEM P R</span></p>
+    <p>Experience starts at day one</p>
+  </footer>
+</div>
+
+<!-- CONTACT -->
+<div class="page" id="contact">
+  <div class="inner-page">
+    <div class="section-header" style="padding-top:0">
+      <h2>GET IN <span>TOUCH</span></h2>
+      <div class="section-line"><span>CONTACT</span></div>
+    </div>
+    <div style="max-width:560px;margin:0 auto;">
+      <div class="contact-info">
+        <h3 style="text-align:center;margin-bottom:28px;">REACH ME DIRECTLY</h3>
+        <div class="contact-item">
+          <div class="contact-icon">✉</div>
+          <div class="contact-detail"><span>EMAIL</span><a href="mailto:iamhakeempr@gmail.com">iamhakeempr@gmail.com</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">☎</div>
+          <div class="contact-detail"><span>PHONE</span><a href="tel:+917736858916">+91 7736858916</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">⌥</div>
+          <div class="contact-detail"><span>GITHUB</span><a href="https://github.com/hakeempr" target="_blank">github.com/hakeempr</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">in</div>
+          <div class="contact-detail"><span>LINKEDIN</span><a href="https://www.linkedin.com/in/hakeem-p-r-518103259" target="_blank">hakeem-p-r-518103259</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">𝕏</div>
+          <div class="contact-detail"><span>TWITTER</span><a href="https://x.com/Hakeem_pr" target="_blank">@Hakeem_pr</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">◉</div>
+          <div class="contact-detail"><span>INSTAGRAM</span><a href="https://instagram.com/hakeem.pr" target="_blank">@hakeem.pr</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">⊕</div>
+          <div class="contact-detail"><span>LOCATION</span><p>Kerala, India</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>© 2026 <span>HAKEEM P R</span></p>
+    <p>Let's build something great</p>
+  </footer>
+</div>
+
+<!-- PROJECT DETAIL -->
+<div class="page" id="project-detail">
+  <div class="detail-inner">
+    <button class="back-btn" onclick="showPage('home')">BACK TO PROJECTS</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+// MATRIX
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+const CHARS = 'ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ01アイウエオカキクケコHAKEEM{}[]<>/\\=+-*&^%$#@!';
+const fontSize = 14;
+let cols, drops = [];
+function initMatrix() { cols = Math.floor(canvas.width / fontSize); drops = Array.from({length: cols}, () => Math.random() * -100); }
+initMatrix();
+window.addEventListener('resize', initMatrix);
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(1,6,1,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < drops.length; i++) {
+    const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+    const y = drops[i] * fontSize;
+    if (drops[i] > 0) {
+      ctx.fillStyle = '#ccffcc'; ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 8;
+      ctx.font = `bold ${fontSize}px "Share Tech Mono", monospace`;
+      ctx.fillText(char, i * fontSize, y); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#00cc33';
+      ctx.font = `${fontSize-1}px "Share Tech Mono", monospace`;
+      ctx.fillText(CHARS[Math.floor(Math.random()*CHARS.length)], i*fontSize, y-fontSize);
+    }
+    if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i] += 0.5;
+  }
+}
+setInterval(drawMatrix, 33);
+
+// TYPEWRITER
+const words = ['<coder>', 'builder', 'problem solver', 'MCA graduate', 'dreamer', 'innovator'];
+let wi = 0, ci = 0, deleting = false;
+const tw = document.getElementById('typewriter');
+function type() {
+  const word = words[wi];
+  if (!deleting) { tw.textContent = word.slice(0, ci+1); ci++; if (ci === word.length) { deleting = true; setTimeout(type, 1800); return; } }
+  else { tw.textContent = word.slice(0, ci-1); ci--; if (ci === 0) { deleting = false; wi = (wi+1) % words.length; } }
+  setTimeout(type, deleting ? 60 : 100);
+}
+type();
+
+// PROJECTS
+const projects = [
+  { id:1, tag:'WEB APP', title:'SmartTask Manager', desc:'A full-stack task management app with real-time collaboration, role-based access, and analytics dashboards.', techs:['React','Node.js','MongoDB','Socket.io'], type:'Web Application', status:'Completed', year:'2024', features:['Real-time task updates using WebSockets','Role-based access control (Admin, Manager, User)','Analytics dashboard with productivity metrics','Email notifications and reminders','Drag-and-drop Kanban board interface','Dark/light theme toggle'], fullDesc:`SmartTask Manager is a comprehensive productivity platform built to address the challenges teams face with task coordination. The application leverages React's component architecture for a responsive frontend and Node.js for a scalable backend API.\n\nThe real-time collaboration layer uses Socket.io, ensuring all connected users see live updates without page refresh. MongoDB provides flexible document storage ideal for nested task hierarchies and dynamic metadata.\n\nThe analytics module visualizes productivity trends, completion rates, and team performance, helping managers make data-driven decisions.` },
+  { id:2, tag:'MOBILE APP', title:'QuickBite Food Delivery', desc:'Cross-platform food delivery app with GPS tracking, payment integration, and restaurant management panel.', techs:['Flutter','Firebase','Google Maps API','Stripe'], type:'Mobile Application', status:'Completed', year:'2024', features:['Real-time GPS order tracking','Stripe payment gateway integration','Restaurant admin panel with order management','Push notifications for order status','User reviews and rating system','Offline mode with cached menus'], fullDesc:`QuickBite is a Flutter-based cross-platform mobile application targeting both iOS and Android from a single codebase. The app connects customers, restaurants, and delivery partners in a seamless ecosystem.\n\nFirebase powers the backend with Firestore for real-time data sync, Firebase Auth for secure user authentication, and Cloud Functions for server-side business logic. The Google Maps SDK enables live delivery tracking with smooth animations.\n\nStripe handles all payment processing with support for cards, wallets, and saved payment methods, meeting PCI compliance standards.` },
+  { id:3, tag:'AI / ML', title:'SentimentScope', desc:'NLP-powered sentiment analysis tool for social media posts and product reviews with visual reports.', techs:['Python','FastAPI','TensorFlow','React'], type:'AI / ML Application', status:'In Progress', year:'2025', features:['Multi-language sentiment detection','Batch CSV upload and processing','Interactive emotion heatmaps','REST API for third-party integration','Fine-tuned BERT transformer model','Exportable PDF reports'], fullDesc:`SentimentScope applies natural language processing to analyze the emotional tone of user-generated content at scale. A fine-tuned BERT model classifies text into positive, negative, and neutral categories with nuanced emotion detection (joy, anger, fear, surprise, etc.).\n\nThe FastAPI backend serves predictions with sub-100ms latency, enabling real-time analysis. Businesses can feed product reviews, social media mentions, or customer feedback directly through the API or the web dashboard.\n\nThe React frontend provides interactive visualizations including time-series trend charts, word clouds, and geographic heatmaps.` },
+  { id:4, tag:'AUTOMATION', title:'DataSync Pipeline', desc:'Automated ETL pipeline that aggregates data from multiple APIs, transforms it, and populates dashboards.', techs:['Python','Apache Airflow','PostgreSQL','Docker'], type:'Backend / DevOps', status:'Completed', year:'2024', features:['Scheduled DAG workflows with Airflow','Multi-source API data ingestion','Data validation and cleaning layers','Containerized with Docker Compose','Failure alerts via email/Slack','Grafana dashboard integration'], fullDesc:`DataSync is a production-grade ETL (Extract, Transform, Load) pipeline built for organizations dealing with fragmented data sources. Apache Airflow orchestrates the DAG (Directed Acyclic Graph) workflows, providing a visual interface for monitoring and debugging.\n\nThe pipeline ingests data from REST APIs, CSVs, and databases, applies cleaning and transformation logic, and writes normalized records to PostgreSQL. Docker Compose packages all services for consistent deployment across environments.\n\nGrafana dashboards visualize pipeline metrics, data quality scores, and throughput KPIs in real time.` },
+  { id:5, tag:'BLOCKCHAIN', title:'VaultChain Wallet', desc:'Decentralized crypto wallet with smart contract interactions, transaction history, and token swapping.', techs:['Solidity','Web3.js','React','Hardhat'], type:'Blockchain / Web3', status:'Prototype', year:'2025', features:['EVM-compatible wallet creation','Smart contract read/write interactions','Token swap via decentralized exchange','Transaction history with block explorer links','Hardware wallet support (Ledger/Trezor)','Multi-network support (ETH, Polygon, BSC)'], fullDesc:`VaultChain is a non-custodial Web3 wallet enabling users to interact with decentralized applications across multiple EVM-compatible blockchains. The frontend, built in React with Web3.js, communicates directly with the blockchain without a centralized backend.\n\nSolidity smart contracts on the Hardhat development environment power the token swap functionality, routing trades through decentralized liquidity pools. The wallet is entirely client-side, ensuring private keys never leave the user's device.\n\nHardware wallet integration via WebUSB and WebHID protocols provides an additional security layer for high-value transactions.` },
+  { id:6, tag:'CLI TOOL', title:'DevKit CLI', desc:'A developer productivity CLI tool for scaffolding projects, managing env configs, and automating boilerplate tasks.', techs:['Python','Click','Jinja2','PyPI'], type:'Developer Tool', status:'Completed', year:'2024', features:['Project scaffolding with custom templates','Environment variable management','Git hooks automation','Code snippet generator','Published on PyPI','Interactive prompts with rich terminal UI'], fullDesc:`DevKit CLI is a command-line developer tool aimed at reducing setup friction for new projects. Built with Python Click and published to PyPI, it can be installed globally with a single pip command.\n\nJinja2 powers the template engine, allowing developers to define and share project scaffolding templates with variable interpolation. The tool auto-generates .env files, .gitignore rules, linting configs, and project documentation stubs.\n\nThe Rich library provides a polished terminal UI with progress bars, color-coded output, and interactive selection menus.` }
+];
+
+const grid = document.getElementById('projects-grid');
+projects.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'project-card reveal';
+  card.innerHTML = `<div class="project-tag">${p.tag}</div><h3>${p.title}</h3><p>${p.desc}</p><div class="project-techs">${p.techs.map(t=>`<span class="tech-tag">${t}</span>`).join('')}</div><div class="project-link">VIEW DETAILS</div>`;
+  card.addEventListener('click', () => showProjectDetail(p.id));
+  grid.appendChild(card);
+});
+
+// SKILLS
+const skillsData = [
+  { category:'PROGRAMMING LANGUAGES', skills:[{name:'Python',level:85},{name:'JavaScript',level:80},{name:'Java',level:75},{name:'C / C++',level:70},{name:'Dart',level:65},{name:'TypeScript',level:72},{name:'Kotlin',level:60},{name:'PHP',level:65},{name:'Swift',level:50},{name:'Go (Golang)',level:55},{name:'Rust',level:45},{name:'SQL',level:80},{name:'Solidity',level:50},{name:'R',level:55},{name:'Bash / Shell',level:70}] },
+  { category:'FRONTEND & MOBILE', skills:[{name:'React.js',level:80},{name:'Flutter',level:72},{name:'HTML5 / CSS3',level:85},{name:'Next.js',level:65},{name:'Vue.js',level:60},{name:'Tailwind CSS',level:75}] },
+  { category:'BACKEND & DATABASES', skills:[{name:'Node.js / Express',level:75},{name:'FastAPI / Flask',level:72},{name:'Django',level:65},{name:'MongoDB',level:75},{name:'PostgreSQL',level:70},{name:'Firebase',level:72},{name:'Redis',level:60}] },
+  { category:'TOOLS & ENGINEERING SKILLS', skills:[{name:'Git / GitHub',level:85},{name:'Docker / Kubernetes',level:65},{name:'CI/CD Pipelines',level:60},{name:'Linux / Ubuntu',level:70},{name:'REST API Design',level:80},{name:'Agile / Scrum',level:72},{name:'Data Structures & Algorithms',level:78},{name:'System Design',level:65},{name:'Cloud (AWS / GCP basics)',level:58},{name:'Machine Learning basics',level:62}] }
+];
+
+const skillsContainer = document.getElementById('skills-container');
+skillsData.forEach(cat => {
+  const sec = document.createElement('div');
+  sec.className = 'skills-category';
+  sec.innerHTML = `<h3>${cat.category}</h3><div class="skills-grid">${cat.skills.map(s=>`<div class="skill-item"><div class="skill-name">${s.name}</div><div class="skill-bar"><div class="skill-fill" data-level="${s.level}" style="width:0%"></div></div></div>`).join('')}</div>`;
+  skillsContainer.appendChild(sec);
+});
+
+function animateBars() {
+  document.querySelectorAll('.skill-fill').forEach(bar => { bar.style.width = bar.dataset.level + '%'; });
+}
+
+// PAGE ROUTER
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'skills') setTimeout(animateBars, 200);
+  setTimeout(() => { document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible')); }, 100);
+}
+
+// PROJECT DETAIL
+function showProjectDetail(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-tag">${p.tag}</div>
+    <div class="detail-title">${p.title}</div>
+    <div class="detail-meta">
+      <div class="detail-meta-item"><span class="detail-meta-label">TYPE</span><span class="detail-meta-value">${p.type}</span></div>
+      <div class="detail-meta-item"><span class="detail-meta-label">STATUS</span><span class="detail-meta-value">${p.status}</span></div>
+      <div class="detail-meta-item"><span class="detail-meta-label">YEAR</span><span class="detail-meta-value">${p.year}</span></div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section-title">OVERVIEW</div>
+      ${p.fullDesc.split('\n\n').map(para=>`<p>${para}</p>`).join('')}
+      <div class="detail-section-title">KEY FEATURES</div>
+      <ul class="detail-features">${p.features.map(f=>`<li>${f}</li>`).join('')}</ul>
+      <div class="detail-section-title">TECH STACK</div>
+      <div class="detail-tech-grid">${p.techs.map(t=>`<span class="detail-tech">${t}</span>`).join('')}</div>
+    </div>`;
+  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+  document.getElementById('project-detail').classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  window.scrollTo(0, 0);
+}
+
+// REVEAL
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+setTimeout(() => { document.querySelectorAll('#home .reveal').forEach(el => el.classList.add('visible')); }, 200);
+</script>
+</body>
+</html>
