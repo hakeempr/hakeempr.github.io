@@ -25,6 +25,39 @@
   .page { display: none; position: relative; z-index: 1; min-height: 100vh; }
   .page.active { display: block; }
 
+  /* MUSIC TOGGLE */
+  .music-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 200;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0,20,8,0.9);
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0,255,65,0.2);
+  }
+  .music-toggle:hover {
+    background: var(--green);
+    color: var(--darker);
+    box-shadow: 0 0 25px var(--green);
+  }
+  .music-toggle.playing {
+    animation: pulse-music 2s infinite;
+  }
+  @keyframes pulse-music {
+    0%,100% { box-shadow: 0 0 15px rgba(0,255,65,0.4); }
+    50% { box-shadow: 0 0 30px var(--green); }
+  }
+
   /* NAV */
   nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 18px 48px; background: rgba(1,6,1,0.92); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
   .nav-logo { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900; color: var(--green); text-shadow: 0 0 20px var(--green); cursor: pointer; letter-spacing: 2px; }
@@ -160,7 +193,7 @@
   @keyframes glitch1 { 0%,94%,100%{transform:none;opacity:0} 95%{transform:translateX(-4px);opacity:0.8} 97%{transform:translateX(4px);opacity:0.8} 99%{transform:translateX(0);opacity:0} }
   @keyframes glitch2 { 0%,94%,100%{transform:none;opacity:0} 95%{transform:translateX(4px);opacity:0.7} 97%{transform:translateX(-4px);opacity:0.7} 99%{transform:none;opacity:0} }
 
-  /* FOOTER — single per page */
+  /* FOOTER */
   footer { border-top: 1px solid var(--border); padding: 24px 80px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
   footer p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
   footer span { color: var(--green); }
@@ -189,6 +222,7 @@
     .inner-page { padding: 100px 24px 60px; }
     .about-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 8px; text-align: center; padding: 16px 24px; }
+    .music-toggle { bottom: 20px; right: 20px; width: 45px; height: 45px; font-size: 18px; }
   }
 
   /* REVEAL */
@@ -199,6 +233,12 @@
 <body>
 
 <canvas id="matrix-canvas"></canvas>
+
+<!-- YouTube Background Music Player (hidden, 1x1 px) -->
+<div id="youtube-player-container" style="position:fixed; bottom:0; left:0; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;"></div>
+
+<!-- Music Toggle Button -->
+<button id="music-toggle" class="music-toggle" title="Toggle Music" aria-label="Toggle background music">♪</button>
 
 <nav>
   <div class="nav-logo" onclick="showPage('home')">H<span>PR</span></div>
@@ -416,6 +456,9 @@
   </div>
 </div>
 
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
 // MATRIX
 const canvas = document.getElementById('matrix-canvas');
@@ -544,6 +587,95 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 setTimeout(() => { document.querySelectorAll('#home .reveal').forEach(el => el.classList.add('visible')); }, 200);
+
+// ===== BACKGROUND MUSIC (YouTube IFrame API) =====
+let player;
+let isMusicPlaying = false;
+let isMusicMuted = true;
+
+// This function is called automatically by the YouTube API once loaded
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('youtube-player-container', {
+    height: '1',
+    width: '1',
+    videoId: 'YR5USHu6D6U', // Tchaikovsky – Pas de Deux (The Nutcracker)
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      loop: 1,
+      playlist: 'YR5USHu6D6U',
+      mute: 1,          // Start muted to allow autoplay
+      showinfo: 0,
+      rel: 0,
+      iv_load_policy: 3,
+      playsinline: 1
+    },
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange
+    }
+  });
+}
+
+function onPlayerReady(event) {
+  // Player is ready, start muted
+  event.target.mute();
+  event.target.playVideo();
+}
+
+function onPlayerStateChange(event) {
+  // If the video ends (should loop automatically with playlist)
+  if (event.data === YT.PlayerState.ENDED) {
+    player.playVideo();
+  }
+}
+
+// Toggle music on/off and mute/unmute
+const musicToggle = document.getElementById('music-toggle');
+musicToggle.addEventListener('click', function() {
+  if (!player) return;
+  if (isMusicMuted) {
+    player.unMute();
+    isMusicMuted = false;
+    musicToggle.classList.add('playing');
+    musicToggle.textContent = '♪'; // or change icon to playing state
+    isMusicPlaying = true;
+  } else {
+    player.mute();
+    isMusicMuted = true;
+    musicToggle.classList.remove('playing');
+    musicToggle.textContent = '♪'; // keep icon, but maybe add a slash?
+    isMusicPlaying = false;
+  }
+});
+
+// Also unmute on first user interaction anywhere on the page (browser policy workaround)
+let hasUnmutedOnFirstInteraction = false;
+function unmuteOnFirstInteraction() {
+  if (!hasUnmutedOnFirstInteraction && player && isMusicMuted) {
+    player.unMute();
+    isMusicMuted = false;
+    hasUnmutedOnFirstInteraction = true;
+    musicToggle.classList.add('playing');
+    isMusicPlaying = true;
+  }
+  // Remove listener after first interaction to avoid repeated calls
+  document.removeEventListener('click', unmuteOnFirstInteraction);
+  document.removeEventListener('touchstart', unmuteOnFirstInteraction);
+  document.removeEventListener('keydown', unmuteOnFirstInteraction);
+}
+document.addEventListener('click', unmuteOnFirstInteraction);
+document.addEventListener('touchstart', unmuteOnFirstInteraction);
+document.addEventListener('keydown', unmuteOnFirstInteraction);
+
+// Fallback if YouTube API doesn't load within 5 seconds
+setTimeout(function() {
+  if (!player) {
+    console.warn('YouTube API failed to load. Music will not play automatically. You can still open the video manually: https://youtu.be/YR5USHu6D6U');
+    // Optionally show an alert or a small note
+    alert('Background music could not be loaded. Please check your internet connection or open the video manually.');
+  }
+}, 5000);
 </script>
 </body>
 </html>
